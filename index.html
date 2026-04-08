@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#2C2018">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Gastos">
+<title>Gastos en Pareja 🏠</title>
+<link rel="manifest" href="./manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #FAF7F2; --warm: #F0EAE0; --sand: #E2D9CC;
+    --dark: #2C2018; --accent: #C4703F; --accent2: #7A9E7E;
+    --red: #C0392B; --text: #3D2B1F; --muted: #9A8478;
+    --white: #FFFFFF;
+    --shadow: 0 4px 24px rgba(44,32,24,0.10);
+    --shadow-lg: 0 8px 32px rgba(44,32,24,0.18);
+    --radius: 18px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: calc(70px + var(--safe-bottom));
+    overscroll-behavior: none;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: var(--dark);
+    color: var(--cream);
+    padding: calc(20px + var(--safe-top)) 20px 18px;
+    text-align: center;
+    position: relative;
+  }
+  .header-title { font-family: 'Playfair Display', serif; font-size: 24px; letter-spacing: -0.5px; margin-bottom: 2px; }
+  .header-sub { font-size: 11px; color: var(--sand); font-weight: 300; letter-spacing: 2px; text-transform: uppercase; }
+  .bonnie-badge { display: inline-block; background: var(--accent); color: white; font-size: 11px; font-weight: 600; padding: 3px 12px; border-radius: 20px; margin-top: 7px; }
+  .db-status { position: absolute; top: calc(14px + var(--safe-top)); right: 14px; font-size: 10px; color: var(--sand); display: flex; align-items: center; gap: 4px; }
+  .db-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent2); animation: pulse 2.5s infinite; }
+  .db-dot.error { background: var(--red); animation: none; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* ── BOTTOM NAV ── */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--dark);
+    display: flex;
+    padding-bottom: var(--safe-bottom);
+    z-index: 50;
+    box-shadow: 0 -4px 20px rgba(44,32,24,0.25);
+  }
+  .nav-btn {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 10px 4px; border: none; background: none; cursor: pointer;
+    color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 10px; font-weight: 600;
+    letter-spacing: 0.5px; text-transform: uppercase; gap: 3px; transition: color 0.2s;
+  }
+  .nav-btn .nav-icon { font-size: 20px; }
+  .nav-btn.active { color: var(--cream); }
+  .nav-btn.active .nav-icon { filter: drop-shadow(0 0 6px rgba(196,112,63,0.6)); }
+
+  /* ── VIEWS ── */
+  .view { display: none; padding-bottom: 20px; }
+  .view.active { display: block; }
+
+  /* ── MONTH SELECTOR ── */
+  .month-section { padding: 12px 16px 6px; }
+  .section-micro { font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .month-scroll { display: flex; gap: 7px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+  .month-scroll::-webkit-scrollbar { display: none; }
+  .month-pill {
+    flex-shrink: 0; background: var(--white); border: 2px solid var(--sand);
+    color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600;
+    padding: 7px 14px; border-radius: 30px; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+  }
+  .month-pill.active { background: var(--dark); border-color: var(--dark); color: var(--cream); }
+
+  /* ── CARDS ── */
+  .cards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px 16px 0; }
+  .card { background: var(--white); border-radius: var(--radius); padding: 15px; box-shadow: var(--shadow); }
+  .card.full { grid-column: 1/-1; background: var(--dark); }
+  .card-label { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+  .card.full .card-label { color: var(--sand); }
+  .card-value { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 700; color: var(--dark); line-height: 1; }
+  .card.full .card-value { color: var(--cream); font-size: 30px; }
+  .card-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .card.full .card-sub { color: var(--sand); }
+
+  /* ── BALANCE CARDS ── */
+  .balance-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px 16px 0; }
+  .bal-card { background: var(--white); border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); }
+  .bal-name { font-size: 12px; font-weight: 700; color: var(--dark); margin-bottom: 10px; }
+  .bal-row { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px; }
+  .bal-row span:first-child { color: var(--muted); }
+  .bal-row span:last-child { font-weight: 600; color: var(--text); }
+  .bal-divider { border: none; border-top: 1px solid var(--sand); margin: 8px 0; }
+  .bal-saldo-lbl { font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
+  .bal-saldo { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; }
+  .s-pos  { color: var(--accent2); }
+  .s-neg  { color: var(--red); }
+  .s-zero { color: var(--muted); }
+  .bal-tag { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; margin-top: 5px; display: inline-block; }
+  .t-ok  { background: #E8F5E9; color: #2E7D32; }
+  .t-low { background: #FDE8E8; color: var(--red); }
+
+  /* ── PROGRESS ── */
+  .prog-card { background: var(--white); border-radius: var(--radius); margin: 10px 16px 0; padding: 15px; box-shadow: var(--shadow); }
+  .prog-title { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+  .prog-row { margin-bottom: 11px; }
+  .prog-row:last-child { margin-bottom: 0; }
+  .prog-info { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
+  .prog-name { color: var(--text); font-weight: 500; }
+  .prog-val  { color: var(--muted); }
+  .prog-bg   { height: 5px; background: var(--warm); border-radius: 3px; overflow: hidden; }
+  .prog-fill { height: 100%; background: linear-gradient(90deg, var(--accent2), var(--accent)); border-radius: 3px; transition: width 0.6s ease; }
+
+  /* ── SECTION HEADER ── */
+  .sec-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 16px 10px; }
+  .sec-title { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--dark); }
+  .fab { color: white; border: none; border-radius: 50%; width: 38px; height: 38px; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.15s; box-shadow: var(--shadow); }
+  .fab:active { transform: scale(0.91); }
+  .fab.orange { background: var(--accent); }
+  .fab.green  { background: var(--accent2); }
+
+  /* ── LIST ITEMS ── */
+  .list { padding: 0 16px; display: flex; flex-direction: column; gap: 9px; }
+  .list-item {
+    background: var(--white); border-radius: var(--radius); padding: 13px 14px;
+    display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow);
+    position: relative; overflow: hidden;
+  }
+  .list-item::before { content:''; position:absolute; left:0;top:0;bottom:0; width:4px; border-radius:4px 0 0 4px; }
+  .list-item.expense::before { background: var(--accent); }
+  .list-item.income::before  { background: var(--accent2); }
+  .li-icon { font-size:22px; flex-shrink:0; width:42px; height:42px; border-radius:11px; display:flex; align-items:center; justify-content:center; }
+  .li-icon.exp-bg { background: var(--warm); }
+  .li-icon.inc-bg { background: #EDF7EE; }
+  .li-info { flex:1; min-width:0; }
+  .li-name { font-size:13px; font-weight:600; color:var(--dark); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .li-meta { font-size:11px; color:var(--muted); margin-top:2px; }
+  .li-right { flex-shrink:0; text-align:right; }
+  .li-amt  { font-family:'Playfair Display',serif; font-size:16px; font-weight:700; }
+  .li-amt.exp-color { color:var(--accent); }
+  .li-amt.inc-color { color:var(--accent2); }
+  .li-sub  { font-size:10px; color:var(--muted); }
+  .li-actions { display:flex; flex-direction:column; gap:3px; flex-shrink:0; }
+  .btn-edit   { background:none; border:none; color:var(--accent2); font-size:14px; cursor:pointer; padding:3px; }
+  .btn-del    { background:none; border:none; color:var(--sand);    font-size:14px; cursor:pointer; padding:3px; }
+  .empty { text-align:center; padding:36px 16px; color:var(--muted); }
+  .empty-icon { font-size:42px; margin-bottom:8px; }
+  .empty-text { font-size:14px; line-height:1.5; }
+
+  /* ── BACKUP VIEW ── */
+  .backup-view { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .backup-card { background: var(--white); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); }
+  .backup-card-title { font-family:'Playfair Display',serif; font-size:18px; color:var(--dark); margin-bottom:6px; }
+  .backup-card-desc { font-size:13px; color:var(--muted); line-height:1.6; margin-bottom:14px; }
+  .backup-textarea { width:100%; height:140px; border:2px solid var(--sand); border-radius:12px; padding:12px; font-family:monospace; font-size:11px; background:var(--warm); color:var(--text); resize:none; outline:none; }
+  .backup-textarea:focus { border-color:var(--accent2); }
+  .btn-full { width:100%; border:none; border-radius:13px; padding:15px; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:700; cursor:pointer; transition:opacity 0.2s; }
+  .btn-full:active { opacity:0.8; }
+  .btn-full.green { background:var(--accent2); color:white; margin-bottom:8px; }
+  .btn-full.orange { background:var(--accent); color:white; margin-bottom:8px; }
+  .btn-full.dark   { background:var(--dark); color:var(--cream); }
+  .db-info-box { background: var(--dark); border-radius: var(--radius); padding: 16px; }
+  .db-info-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .db-info-row:last-child { margin-bottom:0; }
+  .db-info-icon { font-size:20px; flex-shrink:0; }
+  .db-info-text { font-size:12px; color:var(--sand); line-height:1.5; }
+  .db-info-text strong { color:var(--cream); }
+
+  /* ── MODALS ── */
+  .overlay { position:fixed; inset:0; background:rgba(44,32,24,0.6); z-index:100; display:flex; align-items:flex-end; opacity:0; pointer-events:none; transition:opacity 0.25s; }
+  .overlay.open { opacity:1; pointer-events:all; }
+  .sheet { background:var(--cream); width:100%; border-radius:22px 22px 0 0; padding:22px 20px calc(28px + var(--safe-bottom)); transform:translateY(100%); transition:transform 0.32s cubic-bezier(0.32,0.72,0,1); max-height:92vh; overflow-y:auto; }
+  .overlay.open .sheet { transform:translateY(0); }
+  .sheet-handle { width:38px; height:4px; background:var(--sand); border-radius:2px; margin:0 auto 18px; }
+  .sheet-title { font-family:'Playfair Display',serif; font-size:22px; color:var(--dark); margin-bottom:18px; }
+  .form-group { margin-bottom:14px; }
+  .form-lbl { display:block; font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-bottom:7px; }
+  .form-input, .form-select { width:100%; padding:13px 15px; border:2px solid var(--sand); border-radius:13px; font-family:'DM Sans',sans-serif; font-size:16px; background:var(--white); color:var(--dark); appearance:none; outline:none; transition:border-color 0.2s; }
+  .form-input:focus,.form-select:focus { border-color:var(--accent); }
+  .cat-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .cat-btn { background:var(--white); border:2px solid var(--sand); border-radius:11px; padding:11px 8px; cursor:pointer; text-align:center; font-family:'DM Sans',sans-serif; transition:all 0.18s; }
+  .cat-btn .ci { font-size:20px; display:block; margin-bottom:3px; }
+  .cat-btn .cn { font-size:11px; font-weight:500; color:var(--text); line-height:1.2; }
+  .cat-btn.sel { border-color:var(--accent); background:#FDF2EC; }
+  .who-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .who-btn { background:var(--white); border:2px solid var(--sand); border-radius:13px; padding:14px 10px; cursor:pointer; text-align:center; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:700; color:var(--text); transition:all 0.18s; }
+  .who-btn.sel { border-color:var(--accent2); background:#EDF7EE; color:var(--accent2); }
+  .live-box { background:var(--dark); border-radius:13px; padding:13px 15px; margin-bottom:12px; display:none; }
+  .live-box-inner { display:flex; justify-content:space-between; align-items:center; }
+  .live-total { font-family:'Playfair Display',serif; font-size:22px; color:white; }
+  .live-each-lbl { font-size:10px; color:var(--sand); margin-bottom:2px; }
+  .live-each-val { font-family:'Playfair Display',serif; font-size:16px; color:var(--accent); }
+  .submit-btn { width:100%; border:none; border-radius:13px; padding:15px; font-family:'DM Sans',sans-serif; font-size:16px; font-weight:700; cursor:pointer; margin-top:6px; }
+  .submit-btn.dark  { background:var(--dark); color:var(--cream); }
+  .submit-btn.green { background:var(--accent2); color:white; }
+
+  /* ── CONFIRM ── */
+  .confirm-overlay { position:fixed; inset:0; background:rgba(44,32,24,0.65); z-index:200; display:flex; align-items:center; justify-content:center; padding:20px; opacity:0; pointer-events:none; transition:opacity 0.2s; }
+  .confirm-overlay.open { opacity:1; pointer-events:all; }
+  .confirm-box { background:var(--cream); border-radius:20px; padding:24px 20px; width:100%; max-width:310px; text-align:center; transform:scale(0.88); transition:transform 0.22s; box-shadow:var(--shadow-lg); }
+  .confirm-overlay.open .confirm-box { transform:scale(1); }
+  .confirm-icon { font-size:38px; margin-bottom:8px; }
+  .confirm-title { font-size:16px; font-weight:700; color:var(--dark); margin-bottom:5px; }
+  .confirm-sub { font-size:13px; color:var(--muted); margin-bottom:20px; line-height:1.5; }
+  .confirm-btns { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .btn-cancel { background:var(--warm); border:none; border-radius:12px; padding:13px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; color:var(--muted); cursor:pointer; }
+  .btn-confirm { background:var(--red); border:none; border-radius:12px; padding:13px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; color:white; cursor:pointer; }
+  .btn-confirm.green { background:var(--accent2); }
+
+  /* ── TOAST ── */
+  .toast { position:fixed; bottom:calc(80px + var(--safe-bottom)); left:50%; transform:translateX(-50%) translateY(16px); background:var(--dark); color:var(--cream); font-size:13px; font-weight:600; padding:10px 20px; border-radius:30px; opacity:0; transition:all 0.3s; pointer-events:none; z-index:400; white-space:nowrap; box-shadow:var(--shadow-lg); }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="db-status">
+    <div class="db-dot" id="dbDot"></div>
+    <span id="dbLabel">cargando...</span>
+  </div>
+  <div class="header-title">🏠 Gastos en Pareja</div>
+  <div class="header-sub">Cuenta compartida</div>
+  <div class="bonnie-badge">🐾 Con Bonnie</div>
+</div>
+
+<!-- MONTH SELECTOR (shared) -->
+<div class="month-section">
+  <div class="section-micro">Mes</div>
+  <div class="month-scroll" id="monthScroll"></div>
+</div>
+
+<!-- ═══ VIEW: RESUMEN ═══ -->
+<div class="view active" id="view-resumen">
+  <div class="cards-grid">
+    <div class="card full">
+      <div class="card-label">Total gastos del mes</div>
+      <div class="card-value" id="totalMonth">$0</div>
+      <div class="card-sub" id="totalSub">0 gastos registrados</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Pagado</div>
+      <div class="card-value" id="totalPaid" style="color:var(--accent2)">$0</div>
+      <div class="card-sub">confirmado</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Pendiente</div>
+      <div class="card-value" id="totalPending" style="color:var(--accent)">$0</div>
+      <div class="card-sub">por pagar</div>
+    </div>
+  </div>
+
+  <div style="padding:12px 16px 6px">
+    <div class="section-micro">Saldo por persona</div>
+  </div>
+  <div class="balance-grid">
+    <div class="bal-card">
+      <div class="bal-name">👤 Persona 1</div>
+      <div class="bal-row"><span>Ingresado</span><span id="b1inc">$0</span></div>
+      <div class="bal-row"><span>Su parte (50%)</span><span id="b1part">$0</span></div>
+      <hr class="bal-divider">
+      <div class="bal-saldo-lbl">Saldo</div>
+      <div class="bal-saldo s-zero" id="b1saldo">$0</div>
+      <div id="b1tag"></div>
+    </div>
+    <div class="bal-card">
+      <div class="bal-name">👤 Persona 2</div>
+      <div class="bal-row"><span>Ingresado</span><span id="b2inc">$0</span></div>
+      <div class="bal-row"><span>Su parte (50%)</span><span id="b2part">$0</span></div>
+      <hr class="bal-divider">
+      <div class="bal-saldo-lbl">Saldo</div>
+      <div class="bal-saldo s-zero" id="b2saldo">$0</div>
+      <div id="b2tag"></div>
+    </div>
+  </div>
+
+  <div class="prog-card">
+    <div class="prog-title">Detalle por categoría</div>
+    <div id="progressBars"></div>
+  </div>
+</div>
+
+<!-- ═══ VIEW: GASTOS ═══ -->
+<div class="view" id="view-gastos">
+  <div class="sec-header">
+    <div class="sec-title">Gastos del mes</div>
+    <button class="fab orange" onclick="openExpenseModal()">+</button>
+  </div>
+  <div class="list" id="expenseList"></div>
+</div>
+
+<!-- ═══ VIEW: INGRESOS ═══ -->
+<div class="view" id="view-ingresos">
+  <div class="sec-header">
+    <div class="sec-title">Transferencias</div>
+    <button class="fab green" onclick="openIncomeModal()">+</button>
+  </div>
+  <div class="list" id="incomeList"></div>
+</div>
+
+<!-- ═══ VIEW: RESPALDO ═══ -->
+<div class="view" id="view-respaldo">
+  <div class="backup-view">
+
+    <div class="db-info-box">
+      <div class="db-info-row">
+        <div class="db-info-icon">🗄️</div>
+        <div class="db-info-text"><strong>Base de datos local (IndexedDB)</strong><br>Tus datos se guardan directamente en este dispositivo. No dependen de internet ni de ningún servidor externo.</div>
+      </div>
+      <div class="db-info-row">
+        <div class="db-info-icon">🔒</div>
+        <div class="db-info-text"><strong>Solo tú tienes acceso.</strong> Los datos nunca salen de tu celular a menos que tú los exportes.</div>
+      </div>
+      <div class="db-info-row">
+        <div class="db-info-icon">⚠️</div>
+        <div class="db-info-text">Si limpias los datos del navegador o desinstalas la app, los datos se perderán. <strong>Exporta regularmente.</strong></div>
+      </div>
+    </div>
+
+    <div class="backup-card">
+      <div class="backup-card-title">⬇️ Exportar Respaldo</div>
+      <div class="backup-card-desc">Copia el texto y guárdalo en Notas, Google Drive, WhatsApp o donde prefieras. Con ese texto puedes restaurar todo en cualquier momento.</div>
+      <textarea class="backup-textarea" id="exportTextarea" readonly placeholder="Presiona el botón para generar el respaldo..."></textarea>
+      <button class="btn-full green" onclick="exportData()">Generar y copiar respaldo</button>
+      <div id="exportStatus" style="font-size:12px;color:var(--muted);text-align:center;min-height:18px;"></div>
+    </div>
+
+    <div class="backup-card">
+      <div class="backup-card-title">⬆️ Importar Respaldo</div>
+      <div class="backup-card-desc">Pega aquí el texto de tu respaldo y presiona Restaurar. Tus datos serán recuperados completamente.</div>
+      <textarea class="backup-textarea" id="importTextarea" placeholder="Pega aquí el texto del respaldo..."></textarea>
+      <button class="btn-full orange" onclick="doImport()" style="margin-top:8px">Restaurar datos</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" id="nav-resumen" onclick="switchView('resumen')">
+    <span class="nav-icon">📊</span>Resumen
+  </button>
+  <button class="nav-btn" id="nav-gastos" onclick="switchView('gastos')">
+    <span class="nav-icon">💸</span>Gastos
+  </button>
+  <button class="nav-btn" id="nav-ingresos" onclick="switchView('ingresos')">
+    <span class="nav-icon">💰</span>Ingresos
+  </button>
+  <button class="nav-btn" id="nav-respaldo" onclick="switchView('respaldo')">
+    <span class="nav-icon">🔒</span>Respaldo
+  </button>
+</nav>
+
+<!-- MODAL: GASTO -->
+<div class="overlay" id="expenseOverlay" onclick="closeOverlayOutside(event,'expenseOverlay')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="expTitle">Registrar Gasto</div>
+    <div class="form-group">
+      <label class="form-lbl">Categoría</label>
+      <div class="cat-grid" id="catGrid"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-lbl">Monto</label>
+      <input class="form-input" type="number" id="expAmount" placeholder="Ej: 150000" inputmode="numeric" oninput="updateLive()">
+    </div>
+    <div class="form-group">
+      <label class="form-lbl">Nota (opcional)</label>
+      <input class="form-input" type="text" id="expNote" placeholder="Ej: cuota extra...">
+    </div>
+    <div class="form-group">
+      <label class="form-lbl">Estado</label>
+      <select class="form-select" id="expStatus">
+        <option value="pendiente">⏳ Pendiente</option>
+        <option value="pagado">✅ Pagado</option>
+      </select>
+    </div>
+    <div class="live-box" id="liveBox">
+      <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--sand);margin-bottom:6px;">Total del mes con este gasto</div>
+      <div class="live-box-inner">
+        <div class="live-total" id="liveTotal"></div>
+        <div style="text-align:right"><div class="live-each-lbl">Cada uno</div><div class="live-each-val" id="liveEach"></div></div>
+      </div>
+    </div>
+    <button class="submit-btn dark" id="expSubmitBtn" onclick="saveExpense()">Guardar Gasto</button>
+  </div>
+</div>
+
+<!-- MODAL: INGRESO -->
+<div class="overlay" id="incomeOverlay" onclick="closeOverlayOutside(event,'incomeOverlay')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="incTitle">Registrar Transferencia</div>
+    <div class="form-group">
+      <label class="form-lbl">¿Quién transfiere?</label>
+      <div class="who-grid">
+        <button class="who-btn" id="who1" onclick="selectWho('persona1')">👤 Persona 1</button>
+        <button class="who-btn" id="who2" onclick="selectWho('persona2')">👤 Persona 2</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-lbl">Monto transferido</label>
+      <input class="form-input" type="number" id="incAmount" placeholder="Ej: 500000" inputmode="numeric">
+    </div>
+    <div class="form-group">
+      <label class="form-lbl">Nota (opcional)</label>
+      <input class="form-input" type="text" id="incNote" placeholder="Ej: primera cuota, complemento...">
+    </div>
+    <button class="submit-btn green" id="incSubmitBtn" onclick="saveIncome()">Guardar Transferencia</button>
+  </div>
+</div>
+
+<!-- CONFIRM -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-icon" id="confirmIcon">🗑️</div>
+    <div class="confirm-title" id="confirmTitle">¿Eliminar?</div>
+    <div class="confirm-sub" id="confirmSub">Esta acción no se puede deshacer.</div>
+    <div class="confirm-btns">
+      <button class="btn-cancel" onclick="closeConfirm()">Cancelar</button>
+      <button class="btn-confirm" id="confirmOkBtn" onclick="runConfirm()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════
+//  CONSTANTS
+// ══════════════════════════════════════════════
+const CATEGORIES = [
+  {id:'arriendo',  name:'Arriendo Hogar',       icon:'🏠'},
+  {id:'jardin',    name:'Jardín Canino Bonnie',  icon:'🐾'},
+  {id:'comunes',   name:'Gastos Comunes',         icon:'🏢'},
+  {id:'servicios', name:'Servicios Básicos',      icon:'💡'},
+  {id:'super',     name:'Supermercado',           icon:'🛒'},
+  {id:'otros',     name:'Otros Gastos',           icon:'📦'},
+];
+const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DB_NAME    = 'GastosParejaDB';
+const DB_VERSION = 1;
+const STORE_EXP  = 'expenses';
+const STORE_INC  = 'incomes';
+
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+let db = null;
+let currentMonth = new Date().getMonth();
+let currentYear  = new Date().getFullYear();
+let selCat  = null;
+let selWho  = null;
+let editExpId = null;
+let editIncId = null;
+let pendingConfirm = null;
+// In-memory cache for current month
+let cachedExpenses = [];
+let cachedIncomes  = [];
+
+// ══════════════════════════════════════════════
+//  INDEXEDDB SETUP
+// ══════════════════════════════════════════════
+function initDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = e => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains(STORE_EXP)) {
+        const s = d.createObjectStore(STORE_EXP, {keyPath:'id', autoIncrement:true});
+        s.createIndex('monthYear', ['month','year'], {unique:false});
+      }
+      if (!d.objectStoreNames.contains(STORE_INC)) {
+        const s = d.createObjectStore(STORE_INC, {keyPath:'id', autoIncrement:true});
+        s.createIndex('monthYear', ['month','year'], {unique:false});
+      }
+    };
+    req.onsuccess = e => { db = e.target.result; resolve(db); };
+    req.onerror   = e => reject(e.target.error);
+  });
+}
+
+function dbGetAll(storeName, month, year) {
+  return new Promise((resolve, reject) => {
+    const tx  = db.transaction(storeName, 'readonly');
+    const store = tx.objectStore(storeName);
+    const idx = store.index('monthYear');
+    const req = idx.getAll([month, year]);
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror   = () => reject(req.error);
+  });
+}
+
+function dbAdd(storeName, record) {
+  return new Promise((resolve, reject) => {
+    const tx  = db.transaction(storeName, 'readwrite');
+    const req = tx.objectStore(storeName).add(record);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror   = () => reject(req.error);
+  });
+}
+
+function dbPut(storeName, record) {
+  return new Promise((resolve, reject) => {
+    const tx  = db.transaction(storeName, 'readwrite');
+    const req = tx.objectStore(storeName).put(record);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror   = () => reject(req.error);
+  });
+}
+
+function dbDelete(storeName, id) {
+  return new Promise((resolve, reject) => {
+    const tx  = db.transaction(storeName, 'readwrite');
+    const req = tx.objectStore(storeName).delete(id);
+    req.onsuccess = () => resolve();
+    req.onerror   = () => reject(req.error);
+  });
+}
+
+function dbGetAllRecords(storeName) {
+  return new Promise((resolve, reject) => {
+    const tx  = db.transaction(storeName, 'readonly');
+    const req = tx.objectStore(storeName).getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror   = () => reject(req.error);
+  });
+}
+
+function dbClearAndImport(storeName, records) {
+  return new Promise((resolve, reject) => {
+    const tx    = db.transaction(storeName, 'readwrite');
+    const store = tx.objectStore(storeName);
+    store.clear();
+    records.forEach(r => store.put(r));
+    tx.oncomplete = resolve;
+    tx.onerror    = () => reject(tx.error);
+  });
+}
+
+// ══════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════
+function fmt(n) {
+  return (n < 0 ? '-$' : '$') + Math.abs(Math.round(n)).toLocaleString('es-CL');
+}
+
+async function loadMonthCache() {
+  cachedExpenses = await dbGetAll(STORE_EXP, currentMonth, currentYear);
+  cachedIncomes  = await dbGetAll(STORE_INC, currentMonth, currentYear);
+}
+
+// ══════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════
+function switchView(view) {
+  ['resumen','gastos','ingresos','respaldo'].forEach(v => {
+    document.getElementById(`view-${v}`).classList.toggle('active', v === view);
+    document.getElementById(`nav-${v}`).classList.toggle('active', v === view);
+  });
+}
+
+// ══════════════════════════════════════════════
+//  MONTHS
+// ══════════════════════════════════════════════
+function renderMonths() {
+  const el = document.getElementById('monthScroll');
+  el.innerHTML = MONTHS.map((m,i) =>
+    `<button class="month-pill ${i===currentMonth?'active':''}" onclick="selectMonth(${i})">${m}</button>`
+  ).join('');
+  setTimeout(() => {
+    const btns = el.querySelectorAll('.month-pill');
+    if (btns[currentMonth]) btns[currentMonth].scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'});
+  }, 60);
+}
+
+async function selectMonth(i) {
+  currentMonth = i;
+  renderMonths();
+  await loadMonthCache();
+  renderAll();
+}
+
+// ══════════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════════
+function renderSummary() {
+  const exps  = cachedExpenses;
+  const incs  = cachedIncomes;
+  const total = exps.reduce((s,e) => s + e.amount, 0);
+  const paid  = exps.filter(e => e.status === 'pagado').reduce((s,e) => s + e.amount, 0);
+  const half  = total / 2;
+
+  document.getElementById('totalMonth').textContent  = fmt(total);
+  document.getElementById('totalSub').textContent    = `${exps.length} gasto${exps.length!==1?'s':''} registrado${exps.length!==1?'s':''}`;
+  document.getElementById('totalPaid').textContent   = fmt(paid);
+  document.getElementById('totalPending').textContent= fmt(total - paid);
+
+  ['persona1','persona2'].forEach((who, idx) => {
+    const n   = idx + 1;
+    const ing = incs.filter(i => i.who === who).reduce((s,i) => s + i.amount, 0);
+    const sal = ing - half;
+    document.getElementById(`b${n}inc`).textContent  = fmt(ing);
+    document.getElementById(`b${n}part`).textContent = fmt(half);
+    const balEl = document.getElementById(`b${n}saldo`);
+    balEl.textContent = fmt(sal);
+    balEl.className   = `bal-saldo ${sal > 0 ? 's-pos' : sal < 0 ? 's-neg' : 's-zero'}`;
+    const tagEl = document.getElementById(`b${n}tag`);
+    if (sal > 0)      tagEl.innerHTML = `<span class="bal-tag t-ok">✅ Sobran ${fmt(sal)}</span>`;
+    else if (sal < 0) tagEl.innerHTML = `<span class="bal-tag t-low">⚠️ Falta ${fmt(Math.abs(sal))}</span>`;
+    else              tagEl.innerHTML = `<span class="bal-tag t-ok">✔ Exacto</span>`;
+  });
+}
+
+function renderProgress() {
+  const exps  = cachedExpenses;
+  const total = exps.reduce((s,e) => s + e.amount, 0);
+  const el    = document.getElementById('progressBars');
+  if (!exps.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;padding:8px 0">Sin gastos aún</div>';
+    return;
+  }
+  el.innerHTML = CATEGORIES.map(cat => {
+    const sum = exps.filter(e => e.category === cat.id).reduce((s,e) => s + e.amount, 0);
+    if (!sum) return '';
+    const pct = total ? Math.round(sum / total * 100) : 0;
+    return `<div class="prog-row">
+      <div class="prog-info"><span class="prog-name">${cat.icon} ${cat.name}</span><span class="prog-val">${fmt(sum)} (${pct}%)</span></div>
+      <div class="prog-bg"><div class="prog-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function renderExpenses() {
+  const el = document.getElementById('expenseList');
+  if (!cachedExpenses.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">📂</div><div class="empty-text">Sin gastos en ${MONTHS[currentMonth]}.<br>Toca + para agregar.</div></div>`;
+    return;
+  }
+  el.innerHTML = cachedExpenses.map(e => {
+    const cat = CATEGORIES.find(c => c.id === e.category) || {icon:'📦', name:'Otro'};
+    return `<div class="list-item expense">
+      <div class="li-icon exp-bg">${cat.icon}</div>
+      <div class="li-info">
+        <div class="li-name">${cat.name}</div>
+        <div class="li-meta">${e.note || MONTHS[currentMonth]} · ${e.status==='pagado'?'✅ Pagado':'⏳ Pendiente'}</div>
+      </div>
+      <div class="li-right">
+        <div class="li-amt exp-color">${fmt(e.amount)}</div>
+        <div class="li-sub">c/u ${fmt(e.amount/2)}</div>
+      </div>
+      <div class="li-actions">
+        <button class="btn-edit" onclick="openEditExpense(${e.id})">✏️</button>
+        <button class="btn-del"  onclick="deleteExpense(${e.id})">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderIncomes() {
+  const el = document.getElementById('incomeList');
+  if (!cachedIncomes.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">💳</div><div class="empty-text">Sin transferencias en ${MONTHS[currentMonth]}.<br>Toca + para agregar.</div></div>`;
+    return;
+  }
+  el.innerHTML = cachedIncomes.map(inc => {
+    const who = inc.who === 'persona1' ? 'Persona 1' : 'Persona 2';
+    return `<div class="list-item income">
+      <div class="li-icon inc-bg">💸</div>
+      <div class="li-info">
+        <div class="li-name">👤 ${who}</div>
+        <div class="li-meta">${inc.note || MONTHS[currentMonth]}</div>
+      </div>
+      <div class="li-right">
+        <div class="li-amt inc-color">${fmt(inc.amount)}</div>
+      </div>
+      <div class="li-actions">
+        <button class="btn-edit" onclick="openEditIncome(${inc.id})">✏️</button>
+        <button class="btn-del"  onclick="deleteIncome(${inc.id})">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderAll() {
+  renderSummary();
+  renderProgress();
+  renderExpenses();
+  renderIncomes();
+}
+
+// ══════════════════════════════════════════════
+//  EXPENSE MODAL
+// ══════════════════════════════════════════════
+function renderCatGrid() {
+  document.getElementById('catGrid').innerHTML = CATEGORIES.map(cat =>
+    `<button class="cat-btn ${selCat===cat.id?'sel':''}" onclick="pickCat('${cat.id}')">
+      <span class="ci">${cat.icon}</span><span class="cn">${cat.name}</span>
+    </button>`
+  ).join('');
+}
+
+function pickCat(id) { selCat = id; renderCatGrid(); updateLive(); }
+
+function openExpenseModal() {
+  editExpId = null; selCat = null;
+  document.getElementById('expAmount').value = '';
+  document.getElementById('expNote').value   = '';
+  document.getElementById('expStatus').value = 'pendiente';
+  document.getElementById('expTitle').textContent      = 'Registrar Gasto';
+  document.getElementById('expSubmitBtn').textContent  = 'Guardar Gasto';
+  document.getElementById('liveBox').style.display     = 'none';
+  renderCatGrid();
+  document.getElementById('expenseOverlay').classList.add('open');
+}
+
+async function openEditExpense(id) {
+  const record = cachedExpenses.find(e => e.id === id);
+  if (!record) return;
+  editExpId = id; selCat = record.category;
+  document.getElementById('expAmount').value = record.amount;
+  document.getElementById('expNote').value   = record.note || '';
+  document.getElementById('expStatus').value = record.status;
+  document.getElementById('expTitle').textContent     = 'Editar Gasto';
+  document.getElementById('expSubmitBtn').textContent = 'Guardar Cambios';
+  renderCatGrid(); updateLive();
+  document.getElementById('expenseOverlay').classList.add('open');
+}
+
+function updateLive() {
+  const val = parseFloat(document.getElementById('expAmount').value);
+  const box = document.getElementById('liveBox');
+  if (!val || val <= 0) { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  const others  = editExpId ? cachedExpenses.filter(e => e.id !== editExpId) : cachedExpenses;
+  const newTotal = others.reduce((s,e) => s + e.amount, 0) + val;
+  document.getElementById('liveTotal').textContent = fmt(newTotal);
+  document.getElementById('liveEach').textContent  = fmt(newTotal / 2);
+}
+
+async function saveExpense() {
+  const amount = parseFloat(document.getElementById('expAmount').value);
+  if (!selCat)          { showToast('⚠️ Selecciona una categoría'); return; }
+  if (!amount || amount <= 0) { showToast('⚠️ Ingresa un monto válido'); return; }
+  const note   = document.getElementById('expNote').value.trim();
+  const status = document.getElementById('expStatus').value;
+  const record = { category:selCat, amount, note, status, month:currentMonth, year:currentYear, date:new Date().toISOString() };
+  if (editExpId) {
+    await dbPut(STORE_EXP, { ...record, id:editExpId });
+  } else {
+    await dbAdd(STORE_EXP, record);
+  }
+  closeOverlay('expenseOverlay');
+  await loadMonthCache();
+  renderAll();
+  showToast(editExpId ? '✅ Gasto actualizado' : '✅ Gasto guardado');
+}
+
+async function deleteExpense(id) {
+  showConfirm('🗑️', '¿Eliminar gasto?', 'Esta acción no se puede deshacer.', false, async () => {
+    await dbDelete(STORE_EXP, id);
+    await loadMonthCache();
+    renderAll();
+    showToast('🗑️ Gasto eliminado');
+  });
+}
+
+// ══════════════════════════════════════════════
+//  INCOME MODAL
+// ══════════════════════════════════════════════
+function openIncomeModal() {
+  editIncId = null; selWho = null;
+  document.getElementById('incAmount').value = '';
+  document.getElementById('incNote').value   = '';
+  document.getElementById('incTitle').textContent     = 'Registrar Transferencia';
+  document.getElementById('incSubmitBtn').textContent = 'Guardar Transferencia';
+  document.getElementById('who1').classList.remove('sel');
+  document.getElementById('who2').classList.remove('sel');
+  document.getElementById('incomeOverlay').classList.add('open');
+}
+
+async function openEditIncome(id) {
+  const record = cachedIncomes.find(i => i.id === id);
+  if (!record) return;
+  editIncId = id; selWho = record.who;
+  document.getElementById('incAmount').value = record.amount;
+  document.getElementById('incNote').value   = record.note || '';
+  document.getElementById('incTitle').textContent     = 'Editar Transferencia';
+  document.getElementById('incSubmitBtn').textContent = 'Guardar Cambios';
+  document.getElementById('who1').classList.toggle('sel', record.who === 'persona1');
+  document.getElementById('who2').classList.toggle('sel', record.who === 'persona2');
+  document.getElementById('incomeOverlay').classList.add('open');
+}
+
+function selectWho(who) {
+  selWho = who;
+  document.getElementById('who1').classList.toggle('sel', who === 'persona1');
+  document.getElementById('who2').classList.toggle('sel', who === 'persona2');
+}
+
+async function saveIncome() {
+  const amount = parseFloat(document.getElementById('incAmount').value);
+  if (!selWho)              { showToast('⚠️ Selecciona quién transfiere'); return; }
+  if (!amount || amount <= 0) { showToast('⚠️ Ingresa un monto válido'); return; }
+  const note   = document.getElementById('incNote').value.trim();
+  const record = { who:selWho, amount, note, month:currentMonth, year:currentYear, date:new Date().toISOString() };
+  if (editIncId) {
+    await dbPut(STORE_INC, { ...record, id:editIncId });
+  } else {
+    await dbAdd(STORE_INC, record);
+  }
+  closeOverlay('incomeOverlay');
+  await loadMonthCache();
+  renderAll();
+  showToast(editIncId ? '✅ Transferencia actualizada' : '✅ Transferencia guardada');
+}
+
+async function deleteIncome(id) {
+  showConfirm('🗑️', '¿Eliminar transferencia?', 'Esta acción no se puede deshacer.', false, async () => {
+    await dbDelete(STORE_INC, id);
+    await loadMonthCache();
+    renderAll();
+    showToast('🗑️ Transferencia eliminada');
+  });
+}
+
+// ══════════════════════════════════════════════
+//  OVERLAYS
+// ══════════════════════════════════════════════
+function closeOverlay(id) { document.getElementById(id).classList.remove('open'); }
+function closeOverlayOutside(e, id) { if (e.target === document.getElementById(id)) closeOverlay(id); }
+
+// ══════════════════════════════════════════════
+//  CONFIRM DIALOG
+// ══════════════════════════════════════════════
+function showConfirm(icon, title, sub, isGreen, action) {
+  pendingConfirm = action;
+  document.getElementById('confirmIcon').textContent  = icon;
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmSub').textContent   = sub;
+  const okBtn = document.getElementById('confirmOkBtn');
+  okBtn.className = isGreen ? 'btn-confirm green' : 'btn-confirm';
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+function closeConfirm() {
+  pendingConfirm = null;
+  document.getElementById('confirmOverlay').classList.remove('open');
+}
+function runConfirm() {
+  closeConfirm();
+  if (pendingConfirm) pendingConfirm();
+}
+
+// ══════════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════════
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ══════════════════════════════════════════════
+//  EXPORT / IMPORT
+// ══════════════════════════════════════════════
+async function exportData() {
+  try {
+    const expenses = await dbGetAllRecords(STORE_EXP);
+    const incomes  = await dbGetAllRecords(STORE_INC);
+    if (!expenses.length && !incomes.length) {
+      showToast('⚠️ No hay datos para exportar');
+      return;
+    }
+    const backup = {
+      version: 'gp-idb-v1',
+      exportDate: new Date().toISOString(),
+      expenses,
+      incomes
+    };
+    const text = JSON.stringify(backup);
+    document.getElementById('exportTextarea').value = text;
+
+    // Try clipboard
+    try {
+      await navigator.clipboard.writeText(text);
+      document.getElementById('exportStatus').textContent = '✅ ¡Texto copiado al portapapeles!';
+    } catch(e) {
+      document.getElementById('exportStatus').textContent = 'Selecciona el texto de arriba y cópialo manualmente.';
+    }
+    setTimeout(() => document.getElementById('exportStatus').textContent = '', 4000);
+  } catch(e) {
+    showToast('❌ Error al exportar');
+  }
+}
+
+async function doImport() {
+  const text = document.getElementById('importTextarea').value.trim();
+  if (!text) { showToast('⚠️ Pega el texto del respaldo primero'); return; }
+  try {
+    const backup = JSON.parse(text);
+    if (!backup.expenses || !backup.incomes) throw new Error('Formato inválido');
+    showConfirm('⬆️', '¿Restaurar datos?',
+      `Se importarán ${backup.expenses.length} gastos y ${backup.incomes.length} transferencias. Los datos actuales serán reemplazados.`,
+      true,
+      async () => {
+        await dbClearAndImport(STORE_EXP, backup.expenses);
+        await dbClearAndImport(STORE_INC, backup.incomes);
+        await loadMonthCache();
+        renderAll();
+        document.getElementById('importTextarea').value = '';
+        showToast(`✅ ${backup.expenses.length} gastos y ${backup.incomes.length} transferencias restaurados`);
+      }
+    );
+  } catch(e) {
+    showToast('❌ Texto inválido, revisa que esté completo');
+  }
+}
+
+// ══════════════════════════════════════════════
+//  PWA SERVICE WORKER
+// ══════════════════════════════════════════════
+function registerSW() {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js')
+      .then(() => console.log('SW registrado'))
+      .catch(e => console.log('SW error:', e));
+  }
+}
+
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+(async () => {
+  try {
+    await initDB();
+    document.getElementById('dbDot').className   = 'db-dot';
+    document.getElementById('dbLabel').textContent = 'IndexedDB ✓';
+  } catch(e) {
+    document.getElementById('dbDot').className    = 'db-dot error';
+    document.getElementById('dbLabel').textContent = 'Error DB';
+    showToast('❌ Error al abrir base de datos');
+    return;
+  }
+  await loadMonthCache();
+  renderMonths();
+  renderAll();
+  registerSW();
+})();
+</script>
+</body>
+</html>

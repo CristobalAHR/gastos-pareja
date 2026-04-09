@@ -82,6 +82,12 @@
   .mpill{flex-shrink:0;background:var(--white);border:2px solid var(--sand);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;padding:7px 14px;border-radius:30px;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
   .mpill.active{background:var(--dark);border-color:var(--dark);color:var(--cream);}
 
+  /* YEAR SELECTOR */
+  .year-section{display:flex;align-items:center;justify-content:center;gap:16px;padding:8px 16px 4px;}
+  .year-arrow{background:none;border:2px solid var(--sand);color:var(--muted);font-size:20px;font-weight:700;width:34px;height:34px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;line-height:1;}
+  .year-arrow:active{background:var(--dark);border-color:var(--dark);color:var(--cream);}
+  .year-display{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--dark);min-width:70px;text-align:center;}
+
   /* CARDS */
   .cards-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px 16px 0;}
   .card{background:var(--white);border-radius:var(--radius);padding:15px;box-shadow:var(--shadow);}
@@ -250,6 +256,11 @@
   <div class="month-section">
     <div class="micro-label">Mes</div>
     <div class="month-scroll" id="monthScroll"></div>
+  </div>
+  <div class="year-section">
+    <button class="year-arrow" onclick="changeYear(-1)">‹</button>
+    <div class="year-display" id="yearDisplay">2026</div>
+    <button class="year-arrow" onclick="changeYear(1)">›</button>
   </div>
 
   <!-- RESUMEN -->
@@ -551,6 +562,7 @@ window.switchView = function(view) {
 
 // ── MONTHS ───────────────────────────────────
 function renderMonths() {
+  document.getElementById('yearDisplay').textContent = currentYear;
   const el = document.getElementById('monthScroll');
   el.innerHTML = MONTHS.map((m,i)=>
     `<button class="mpill ${i===currentMonth?'active':''}" onclick="selectMonth(${i})">${m}</button>`
@@ -564,6 +576,19 @@ function renderMonths() {
 window.selectMonth = async function(i) {
   currentMonth=i; renderMonths(); showSkeletons();
   await loadMonth(); renderAll();
+};
+
+window.changeYear = async function(delta) {
+  currentYear += delta;
+  document.getElementById('yearDisplay').textContent = currentYear;
+  // If navigating to current year, reset to current month; otherwise stay on same month
+  if (currentYear === new Date().getFullYear() && delta > 0) {
+    currentMonth = new Date().getMonth();
+  }
+  renderMonths();
+  showSkeletons();
+  await loadMonth();
+  renderAll();
 };
 
 function showSkeletons() {

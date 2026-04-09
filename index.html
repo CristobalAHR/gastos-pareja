@@ -274,7 +274,7 @@
     <div style="padding:12px 16px 6px"><div class="micro-label">Saldo por persona</div></div>
     <div class="bal-grid">
       <div class="bal-card">
-        <div class="bal-name">👤 Persona 1</div>
+        <div class="bal-name">👤 Cris</div>
         <div class="bal-row"><span>Ingresado</span><span id="b1inc">$0</span></div>
         <div class="bal-row"><span>Su parte (50%)</span><span id="b1part">$0</span></div>
         <hr class="bal-div">
@@ -283,7 +283,7 @@
         <div id="b1tag"></div>
       </div>
       <div class="bal-card">
-        <div class="bal-name">👤 Persona 2</div>
+        <div class="bal-name">👤 Leo</div>
         <div class="bal-row"><span>Ingresado</span><span id="b2inc">$0</span></div>
         <div class="bal-row"><span>Su parte (50%)</span><span id="b2part">$0</span></div>
         <hr class="bal-div">
@@ -390,8 +390,8 @@
     <div class="sheet-title" id="incTitle">Registrar Transferencia</div>
     <div class="form-group"><label class="form-lbl">¿Quién transfiere?</label>
       <div class="who-grid">
-        <button class="who-btn" id="who1" onclick="selWhoFn('persona1')">👤 Persona 1</button>
-        <button class="who-btn" id="who2" onclick="selWhoFn('persona2')">👤 Persona 2</button>
+        <button class="who-btn" id="who1" onclick="selWhoFn('persona1')">👤 Cris</button>
+        <button class="who-btn" id="who2" onclick="selWhoFn('persona2')">👤 Leo</button>
       </div>
     </div>
     <div class="form-group"><label class="form-lbl">Monto transferido</label><input class="form-input" type="number" id="incAmount" placeholder="Ej: 500000" inputmode="numeric"></div>
@@ -583,6 +583,7 @@ function renderSummary() {
   document.getElementById('totalPending').textContent = fmt(total-paid);
   ['persona1','persona2'].forEach((who,idx)=>{
     const n=idx+1;
+    const nombre = who==='persona1' ? 'Cris' : 'Leo';
     const ing=incs.filter(i=>i.who===who).reduce((s,i)=>s+i.amount,0);
     const sal=ing-half;
     document.getElementById(`b${n}inc`).textContent  = fmt(ing);
@@ -640,7 +641,7 @@ function renderIncomes() {
     return;
   }
   el.innerHTML=cachedIncomes.map(inc=>{
-    const who=inc.who==='persona1'?'Persona 1':'Persona 2';
+    const who=inc.who==='persona1'?'Cris':'Leo';
     return `<div class="list-item income">
       <div class="li-icon ib">💸</div>
       <div class="li-info"><div class="li-name">👤 ${who}</div><div class="li-meta">${inc.note||MONTHS[currentMonth]}</div></div>

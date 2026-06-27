@@ -819,7 +819,7 @@ function showConfirm(icon,title,sub,okColor,action){
   document.getElementById('confirmOL').classList.add('open');
 }
 window.closeConfirm=function(){pendingConfirm=null;document.getElementById('confirmOL').classList.remove('open');};
-window.runConfirm=function(){closeConfirm();if(pendingConfirm)pendingConfirm();};
+window.runConfirm=function(){window.closeConfirm();if(pendingConfirm)pendingConfirm();};
 
 // ── TOAST ────────────────────────────────────
 let toastTimer=null;

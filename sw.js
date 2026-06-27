@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gastos-pareja-v1';
+const CACHE_NAME = 'gastos-pareja-v2';
 const ASSETS = ['./index.html', './manifest.json'];
 
 self.addEventListener('install', e => {
